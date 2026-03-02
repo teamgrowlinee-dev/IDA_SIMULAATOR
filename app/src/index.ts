@@ -6,6 +6,7 @@ import { env } from "./config/env.js";
 import chatRoutes from "./routes/chat.js";
 import storefrontRoutes from "./routes/storefront.js";
 import bundleRoutes from "./routes/bundle.js";
+import simulatorRoutes from "./routes/simulator.js";
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -21,9 +22,22 @@ app.get("/health", (_req, res) => {
 app.use("/api", chatRoutes);
 app.use("/api", storefrontRoutes);
 app.use("/api", bundleRoutes);
+app.use("/api", simulatorRoutes);
 app.use("/proxy/api", chatRoutes);
 app.use("/proxy/api", storefrontRoutes);
 app.use("/proxy/api", bundleRoutes);
+app.use("/proxy/api", simulatorRoutes);
+
+const publicDir = path.resolve(__dirname, "../public");
+app.use("/simulator-assets", express.static(path.join(publicDir, "simulator"), { maxAge: "1h" }));
+
+app.get("/room", (_req, res) => {
+  res.sendFile(path.join(publicDir, "simulator", "room.html"));
+});
+
+app.get("/simulator", (_req, res) => {
+  res.sendFile(path.join(publicDir, "simulator", "simulator.html"));
+});
 
 const widgetDist = path.resolve(__dirname, "../../packages/widget/dist");
 app.use("/widget", express.static(widgetDist, { maxAge: "1h" }));

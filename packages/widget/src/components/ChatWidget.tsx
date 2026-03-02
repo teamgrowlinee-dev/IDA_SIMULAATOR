@@ -14,6 +14,15 @@ let msgCounter = 0;
 const nextId = () => `msg-${++msgCounter}`;
 const parseDisplayPrice = (priceValue: string | undefined) =>
   parseFloat(priceValue?.replace(/[^0-9.]/g, "") ?? "0");
+const SIM_ROOM_STORAGE_KEY = "ida_room_id";
+
+const safeOriginFromUrl = (value: string): string => {
+  try {
+    return new URL(value).origin;
+  } catch {
+    return window.location.origin;
+  }
+};
 
 export const ChatWidget: React.FC<Props> = ({ apiBase, brandName, storeOrigin }) => {
   const [open, setOpen] = useState(() => {
@@ -36,6 +45,13 @@ export const ChatWidget: React.FC<Props> = ({ apiBase, brandName, storeOrigin })
   const [bundleFlowActive, setBundleFlowActive] = useState(false);
   const [bundleLoading, setBundleLoading] = useState(false);
   const [bundleResults, setBundleResults] = useState<Bundle[] | null>(null);
+  const [simulatorRoomId, setSimulatorRoomId] = useState<string>(() => {
+    try {
+      return localStorage.getItem(SIM_ROOM_STORAGE_KEY) ?? "";
+    } catch {
+      return "";
+    }
+  });
 
   const messagesRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -51,6 +67,28 @@ export const ChatWidget: React.FC<Props> = ({ apiBase, brandName, storeOrigin })
       sessionStorage.setItem("gl_chat_open", open ? "1" : "0");
     } catch {}
   }, [open]);
+
+  useEffect(() => {
+    if (!simulatorRoomId) return;
+    try {
+      localStorage.setItem(SIM_ROOM_STORAGE_KEY, simulatorRoomId);
+    } catch {}
+  }, [simulatorRoomId]);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const payload = event.data as { type?: string; roomId?: string } | null;
+      if (!payload || payload.type !== "ida-room-created" || !payload.roomId) return;
+      setSimulatorRoomId(payload.roomId);
+      setMessages((prev) => [
+        ...prev,
+        { id: nextId(), role: "assistant", text: `Salvestasin su toa (roomId: ${payload.roomId}). Nüüd saad tooteid simulaatoris avada.` }
+      ]);
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
 
   useEffect(() => {
     const el = inputRef.current;
@@ -87,6 +125,45 @@ export const ChatWidget: React.FC<Props> = ({ apiBase, brandName, storeOrigin })
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+
+  const simulatorBaseOrigin = safeOriginFromUrl(apiBase);
+
+  const openRoomWizard = useCallback(
+    (nextSku?: string) => {
+      const url = new URL("/room", simulatorBaseOrigin);
+      if (nextSku) {
+        url.searchParams.set("nextSku", nextSku);
+      }
+      window.open(url.toString(), "_blank", "noopener,noreferrer");
+    },
+    [simulatorBaseOrigin]
+  );
+
+  const openSimulator = useCallback(
+    (sku?: string) => {
+      if (!simulatorRoomId) {
+        openRoomWizard(sku);
+        return;
+      }
+      const url = new URL("/simulator", simulatorBaseOrigin);
+      url.searchParams.set("roomId", simulatorRoomId);
+      if (sku) url.searchParams.set("sku", sku);
+      window.open(url.toString(), "_blank", "noopener,noreferrer");
+    },
+    [openRoomWizard, simulatorBaseOrigin, simulatorRoomId]
+  );
+
+  const handleViewInSimulator = useCallback(
+    (card: ProductCardType) => {
+      const sku = String(card.handle || card.id || card.variantId || "").trim();
+      if (!sku) {
+        openSimulator();
+        return;
+      }
+      openSimulator(sku);
+    },
+    [openSimulator]
+  );
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -534,6 +611,7 @@ export const ChatWidget: React.FC<Props> = ({ apiBase, brandName, storeOrigin })
                     card={card}
                     loading={addingVariant === card.variantId}
                     onAdd={handleAddToCart}
+                    onViewInSimulator={handleViewInSimulator}
                   />
                 ))}
                 {msg.productSummary && <div className="gl-product-summary">{msg.productSummary}</div>}
@@ -610,7 +688,8 @@ export const ChatWidget: React.FC<Props> = ({ apiBase, brandName, storeOrigin })
         {!bundleFlowActive && !bundleResults && !welcomeTyping && messages.length > 0 && (
           <div className="gl-quick-actions">
             <button onClick={() => setBundleFlowActive(true)}>🛋️ Koosta komplekt</button>
-            <button disabled title="Tulemas peagi">📐 Ruumisobivus</button>
+            <button onClick={() => openRoomWizard()}>🏠 Loo minu tuba</button>
+            <button onClick={() => openSimulator()}>{simulatorRoomId ? "🧭 Ava simulaator" : "🧭 Ava simulaator (loo tuba)"}</button>
           </div>
         )}
 

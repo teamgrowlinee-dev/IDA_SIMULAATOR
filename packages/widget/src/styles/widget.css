@@ -430,6 +430,11 @@
   font-size: 12px;
   margin: 4px 0 8px;
 }
+.gl-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
 .gl-card-add {
   width: 100%;
   background: linear-gradient(135deg, #7a4f2f, #5b3a24);
@@ -447,6 +452,22 @@
   box-shadow: 0 4px 14px rgba(122, 79, 47, 0.4);
 }
 .gl-card-add:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
+.gl-card-sim {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.06);
+  color: #f3f5fa;
+  padding: 9px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.15s, border-color 0.15s;
+}
+.gl-card-sim:hover {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.34);
+}
 
 /* ── Product set summary ── */
 .gl-product-summary {

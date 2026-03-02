@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="et">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IDA Room Wizard</title>
+    <link rel="stylesheet" href="/simulator-assets/simulator.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <div class="topbar">
+        <div>
+          <h1 class="title">Minu tuba</h1>
+          <div class="muted">Loo ruum ja ava see simulaatoris</div>
+        </div>
+        <a class="tag" href="/simulator">Ava simulaator</a>
+      </div>
+
+      <section class="panel">
+        <form id="room-form">
+          <div class="wizard-step">
+            <h3>1. Ruumi kuju ja mõõdud</h3>
+            <label for="shape">Ruumi kuju</label>
+            <select id="shape" name="shape">
+              <option value="rect">Ristkülik (MVP)</option>
+            </select>
+            <div class="row">
+              <div>
+                <label for="width-cm">Laius (cm)</label>
+                <input id="width-cm" name="width_cm" type="number" min="120" value="420" required />
+              </div>
+              <div>
+                <label for="length-cm">Pikkus (cm)</label>
+                <input id="length-cm" name="length_cm" type="number" min="120" value="560" required />
+              </div>
+              <div>
+                <label for="height-cm">Kõrgus (cm, optional)</label>
+                <input id="height-cm" name="height_cm" type="number" min="180" value="260" />
+              </div>
+            </div>
+          </div>
+
+          <div class="wizard-step">
+            <h3>2. Uks</h3>
+            <label><input id="door-enabled" type="checkbox" checked /> Lisa uks</label>
+            <div id="door-fields">
+              <div class="row">
+                <div>
+                  <label for="door-wall">Sein</label>
+                  <select id="door-wall">
+                    <option value="north">North</option>
+                    <option value="east">East</option>
+                    <option value="south">South</option>
+                    <option value="west">West</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="door-offset">Offset nurgast (cm)</label>
+                  <input id="door-offset" type="number" min="0" value="120" />
+                </div>
+                <div>
+                  <label for="door-width">Ukse laius (cm)</label>
+                  <input id="door-width" type="number" min="40" value="90" />
+                </div>
+              </div>
+            </div>
+            <div class="hint">MVP: üks uks, vajadusel saad hiljem lisada rohkem.</div>
+          </div>
+
+          <div class="wizard-step">
+            <h3>3. Takistused (optional)</h3>
+            <div id="obstacles-list"></div>
+            <button id="add-obstacle" type="button" class="btn ghost">+ Lisa takistus-kast</button>
+            <div class="hint">Koordinaadid on ruumi sees cm-s (x vasakult, z ülevalt).</div>
+          </div>
+
+          <div class="wizard-step">
+            <h3>4. Visual refs (optional)</h3>
+            <label for="visual-files">Lae pildid (max 3)</label>
+            <input id="visual-files" type="file" accept="image/*" multiple />
+            <div class="hint">MVP-s salvestatakse failid visual refs alla; AI tuvastust veel ei tehta.</div>
+          </div>
+
+          <div class="toolbar">
+            <button type="submit" class="btn primary">Salvesta tuba</button>
+            <button id="open-simulator-btn" type="button" class="btn" disabled>Ava simulaator</button>
+          </div>
+
+          <div id="status-box" class="status-box muted">Täida väljad ja salvesta tuba.</div>
+        </form>
+      </section>
+    </main>
+
+    <script type="module" src="/simulator-assets/room.js"></script>
+  </body>
+</html>

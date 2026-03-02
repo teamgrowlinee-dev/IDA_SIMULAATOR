@@ -5,9 +5,10 @@ interface Props {
   card: ProductCardType;
   loading: boolean;
   onAdd: (card: ProductCardType) => void;
+  onViewInSimulator: (card: ProductCardType) => void;
 }
 
-export const ProductCard: React.FC<Props> = ({ card, loading, onAdd }) => {
+export const ProductCard: React.FC<Props> = ({ card, loading, onAdd, onViewInSimulator }) => {
   return (
     <div className="gl-card">
       {card.image ? (
@@ -22,14 +23,24 @@ export const ProductCard: React.FC<Props> = ({ card, loading, onAdd }) => {
           ) : null}
         </div>
         {card.reason ? <p className="gl-card-reason">{card.reason}</p> : null}
-        <button
-          className="gl-card-add"
-          disabled={loading}
-          onClick={() => onAdd(card)}
-          aria-label={`Lisa ${card.title} ostukorvi`}
-        >
-          {loading ? "Lisan..." : "Lisa ostukorvi"}
-        </button>
+        <div className="gl-card-actions">
+          <button
+            className="gl-card-add"
+            disabled={loading}
+            onClick={() => onAdd(card)}
+            aria-label={`Lisa ${card.title} ostukorvi`}
+          >
+            {loading ? "Lisan..." : "Lisa ostukorvi"}
+          </button>
+          <button
+            className="gl-card-sim"
+            type="button"
+            onClick={() => onViewInSimulator(card)}
+            aria-label={`Vaata ${card.title} simulaatoris`}
+          >
+            Vaata simulaatoris
+          </button>
+        </div>
       </div>
     </div>
   );

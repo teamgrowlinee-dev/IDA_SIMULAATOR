@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="et">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IDA Room Simulator</title>
+    <link rel="stylesheet" href="/simulator-assets/simulator.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <div class="topbar">
+        <div>
+          <h1 class="title">Room Simulator</h1>
+          <div id="room-meta" class="muted">Laen ruumi...</div>
+        </div>
+        <div class="toolbar">
+          <a class="btn ghost" href="/room">Muuda tuba</a>
+          <span id="status-chip" class="tag">Valmis</span>
+        </div>
+      </div>
+
+      <div class="grid">
+        <aside class="stack">
+          <section class="panel">
+            <h2 class="section-title">Toote lisamine</h2>
+            <label for="sku-input">SKU / handle / toote ID</label>
+            <div class="row two">
+              <input id="sku-input" placeholder="nt 12345 või diivanvoodi-bodil" />
+              <button id="add-sku-btn" class="btn primary" type="button">Lisa ruumi</button>
+            </div>
+            <div class="hint">Deep-link: <code>/simulator?roomId=...&sku=...</code></div>
+          </section>
+
+          <section class="panel">
+            <h2 class="section-title">Valitud toode</h2>
+            <div class="toolbar">
+              <button id="rotate-left-btn" class="btn" type="button">Pööra -15°</button>
+              <button id="rotate-right-btn" class="btn" type="button">Pööra +15°</button>
+              <button id="snap-wall-btn" class="btn warn" type="button">Seina äärde</button>
+            </div>
+            <div id="selection-info" class="hint">Vali toode 2D vaates.</div>
+          </section>
+
+          <section class="panel">
+            <h2 class="section-title">Ruumis olevad tooted</h2>
+            <div id="products-list" class="products"></div>
+          </section>
+
+          <section class="panel">
+            <h2 class="section-title">Juhised</h2>
+            <div class="hint">Drag: liiguta toodet 2D vaates.</div>
+            <div class="hint">Rotate: kasuta nuppe, samm 15°.</div>
+            <div class="hint">Collision: seinast välja ei lasta, konflikt annab hoiatuse.</div>
+            <div id="warning-box" class="status-box">Hoiatused kuvatakse siin.</div>
+          </section>
+        </aside>
+
+        <section class="stack">
+          <div class="viz-grid">
+            <div class="stage">
+              <h2 class="section-title">2D floor plan</h2>
+              <canvas id="floor-canvas" width="900" height="560"></canvas>
+            </div>
+            <div class="stage">
+              <h2 class="section-title">3D vaade</h2>
+              <div id="scene-3d"></div>
+            </div>
+          </div>
+          <div class="footer-note">
+            Kui toode ei mahu seina äärde, paigutatakse see ruumi keskele ja kuvatakse hoiatus.
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script type="module" src="/simulator-assets/simulator.js"></script>
+  </body>
+</html>
