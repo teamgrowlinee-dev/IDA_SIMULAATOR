@@ -15,6 +15,7 @@ const nextId = () => `msg-${++msgCounter}`;
 const parseDisplayPrice = (priceValue: string | undefined) =>
   parseFloat(priceValue?.replace(/[^0-9.]/g, "") ?? "0");
 const SIM_ROOM_STORAGE_KEY = "ida_room_id";
+const LOCAL_TEST_CART_KEY = "ida_local_test_cart";
 
 const safeOriginFromUrl = (value: string): string => {
   try {
@@ -22,6 +23,66 @@ const safeOriginFromUrl = (value: string): string => {
   } catch {
     return window.location.origin;
   }
+};
+
+const isLocalhostRuntime = (): boolean => {
+  const host = window.location.hostname;
+  return host === "localhost" || host === "127.0.0.1" || host === "::1";
+};
+
+interface LocalTestCartLine {
+  key: string;
+  title: string;
+  price: string;
+  qty: number;
+  handle?: string;
+  permalink?: string;
+  image?: string;
+}
+
+const readLocalTestCart = (): LocalTestCartLine[] => {
+  try {
+    const raw = localStorage.getItem(LOCAL_TEST_CART_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as LocalTestCartLine[]) : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeLocalTestCart = (items: LocalTestCartLine[]) => {
+  try {
+    localStorage.setItem(LOCAL_TEST_CART_KEY, JSON.stringify(items));
+  } catch {
+    // ignore storage write failures in private mode
+  }
+};
+
+const addItemsToLocalTestCart = (items: Array<Pick<ProductCardType, "id" | "variantId" | "title" | "price" | "handle" | "permalink" | "image">>) => {
+  const current = readLocalTestCart();
+  const next = [...current];
+
+  for (const item of items) {
+    const key = String(item.variantId || item.id || item.handle || item.title).trim();
+    const existing = next.find((line) => line.key === key);
+    if (existing) {
+      existing.qty += 1;
+      continue;
+    }
+    next.push({
+      key,
+      title: item.title,
+      price: item.price,
+      qty: 1,
+      handle: item.handle,
+      permalink: item.permalink,
+      image: item.image
+    });
+  }
+
+  writeLocalTestCart(next);
+  return next;
 };
 
 export const ChatWidget: React.FC<Props> = ({ apiBase, brandName, storeOrigin }) => {
@@ -260,6 +321,21 @@ export const ChatWidget: React.FC<Props> = ({ apiBase, brandName, storeOrigin })
     async (card: ProductCardType) => {
       setAddingVariant(card.variantId);
 
+      if (isLocalhostRuntime()) {
+        addItemsToLocalTestCart([card]);
+        const localCartUrl = `${window.location.origin}/local-cart`;
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: nextId(),
+            role: "assistant",
+            text: `${card.title} lisatud localhost test-ostukorvi. Ava: ${localCartUrl}`
+          }
+        ]);
+        setAddingVariant(null);
+        return;
+      }
+
       const safeStoreOrigin = (() => {
         try {
           return new URL(storeOrigin).origin;
@@ -433,6 +509,18 @@ export const ChatWidget: React.FC<Props> = ({ apiBase, brandName, storeOrigin })
 
   const handleAddAllToCart = useCallback(
     async (items: BundleItem[]) => {
+      if (isLocalhostRuntime()) {
+        addItemsToLocalTestCart(items);
+        const localCartUrl = `${window.location.origin}/local-cart`;
+        setBundleResults(null);
+        setBundleFlowActive(false);
+        setMessages((prev) => [
+          ...prev,
+          { id: nextId(), role: "assistant", text: `Lisatud ${items.length} toodet localhost test-ostukorvi. Ava: ${localCartUrl}` }
+        ]);
+        return;
+      }
+
       const safeStoreOrigin = (() => {
         try { return new URL(storeOrigin).origin; } catch { return window.location.origin; }
       })();

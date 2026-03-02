@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="et">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IDA Local Test Cart</title>
+    <link rel="stylesheet" href="/simulator-assets/simulator.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <div class="topbar">
+        <div>
+          <h1 class="title">Localhost test-ostukorv</h1>
+          <div class="muted">Ainult lokaalseteks testideks, ei mõjuta päris IDA poodi.</div>
+        </div>
+        <div class="toolbar">
+          <a class="btn ghost" href="/simulator">Ava simulaator</a>
+          <button id="clear-cart-btn" class="btn warn" type="button">Tühjenda</button>
+        </div>
+      </div>
+
+      <section class="panel">
+        <h2 class="section-title">Tooted</h2>
+        <div id="cart-list" class="products"></div>
+        <div id="cart-total" class="footer-note">Kokku: 0.00€</div>
+      </section>
+    </main>
+
+    <script type="module" src="/simulator-assets/local-cart.js"></script>
+  </body>
+</html>

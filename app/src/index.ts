@@ -39,6 +39,10 @@ app.get("/simulator", (_req, res) => {
   res.sendFile(path.join(publicDir, "simulator", "simulator.html"));
 });
 
+app.get("/local-cart", (_req, res) => {
+  res.sendFile(path.join(publicDir, "simulator", "local-cart.html"));
+});
+
 const widgetDist = path.resolve(__dirname, "../../packages/widget/dist");
 app.use("/widget", express.static(widgetDist, { maxAge: "1h" }));
 
