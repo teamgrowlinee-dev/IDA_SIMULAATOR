@@ -1,4 +1,13 @@
-export const API_BASE = "/api";
+const readRuntimeApiBase = () => {
+  try {
+    const value = String(window.__IDA_SIMULATOR_API_BASE__ ?? "").trim();
+    return value ? value.replace(/\/$/, "") : "";
+  } catch {
+    return "";
+  }
+};
+
+export const API_BASE = readRuntimeApiBase() || "/api";
 export const PROFILE_STORAGE_KEY = "ida_profile_id";
 export const ACTIVE_PROJECT_STORAGE_KEY = "ida_active_project_id";
 export const LOCAL_CART_STORAGE_KEY = "ida_local_cart_v1";

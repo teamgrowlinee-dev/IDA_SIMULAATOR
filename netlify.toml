@@ -1,0 +1,8 @@
+[build]
+  command = "npm run build:netlify-simulator"
+  publish = "netlify-dist"
+
+[[redirects]]
+  from = "/"
+  to = "/planner/"
+  status = 302

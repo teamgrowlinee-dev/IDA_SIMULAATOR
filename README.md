@@ -62,3 +62,24 @@ Lisa WordPressi (nt footeri custom script) järgmine:
 ```
 
 Märkus: `apiBase` peab osutama serverile, kus jookseb `app`.
+
+## Netlify simulator deploy
+Kui soovid deployda ainult simulaatori staatilise frontendi eraldi Netlifysse, siis kasuta:
+
+```bash
+npm run build:netlify-simulator
+```
+
+See loob kausta `netlify-dist/`, mis sisaldab:
+- staatilisi simulaatori lehti (`/planner`, `/simulator`, `/room`, `/local-cart`)
+- `three` vendor failid
+- runtime API seadistust
+
+Vaikimisi kasutab Netlify build olemasolevat Render backendi:
+- `https://ida-chatbot.onrender.com/api`
+
+Soovi korral saad buildis API ümber suunata:
+
+```bash
+SIMULATOR_API_BASE=https://sinu-backend.example.com/api npm run build:netlify-simulator
+```

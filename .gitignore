@@ -10,5 +10,6 @@ yarn-error.log*
 
 # Build outputs
 app/dist/
+netlify-dist/
 # widget dist is committed so Render doesn't need vite in build step
 # packages/widget/dist/

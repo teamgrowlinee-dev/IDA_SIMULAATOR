@@ -12,7 +12,8 @@
     "dev:widget": "npm --workspace @idastuudio/widget run dev",
     "build": "npm-run-all build:widget build:app",
     "build:app": "npm --workspace app run build",
-    "build:widget": "npm --workspace @idastuudio/widget run build"
+    "build:widget": "npm --workspace @idastuudio/widget run build",
+    "build:netlify-simulator": "node scripts/build-netlify-simulator.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
