@@ -11,7 +11,6 @@ import { createCatalogPanelV4 } from "./panels/catalog-panel.js";
 import { createCartPanel } from "./panels/cart-panel.js";
 import { createDetailsPanel } from "./panels/details-panel.js";
 import { createFloatingToolbar } from "./canvas/floating-toolbar.js";
-import { createPlannerOnboarding } from "./onboarding-tour.js";
 
 // ── Constants ──────────────────────────────────────────────────
 const CM_TO_M = 0.01;
@@ -706,17 +705,6 @@ const detailsPanel = createDetailsPanel({
   containerEl: panelDetailsEl,
   onAddToScene: (product) => addProductToScene(product),
   onAddToCart: (product) => addProductToLocalCart(product)
-});
-
-onboarding = createPlannerOnboarding({
-  onOpenPanel: (side, panelId) => {
-    drawer.open(side, panelId);
-    if (side === "right" && panelId === "cart") {
-      cartPanel.refresh();
-    }
-  },
-  onEnsureCatalogReady: ensureCatalogInitialized,
-  onStatusChange: setStatus
 });
 
 // ── Add to scene helpers ───────────────────────────────────────
