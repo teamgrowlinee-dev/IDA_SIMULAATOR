@@ -131,6 +131,192 @@ const findFreePos = (dims, room, existingObjects) => {
   return { x_cm: room.width_cm / 2, z_cm: room.length_cm / 2 };
 };
 
+const SCENE_OBJECT_DEFAULT_DIMS = {
+  sofa: { w: 220, d: 95, h: 85 },
+  cornersofa: { w: 270, d: 170, h: 85 },
+  sofabed: { w: 210, d: 100, h: 90 },
+  chaiselongue: { w: 90, d: 200, h: 85 },
+  sunlounger: { w: 75, d: 200, h: 80 },
+  armchair: { w: 85, d: 90, h: 90 },
+  bed: { w: 180, d: 210, h: 95 },
+  table: { w: 160, d: 90, h: 75 },
+  roundtable: { w: 110, d: 110, h: 75 },
+  coffeetable: { w: 120, d: 70, h: 45 },
+  sidetable: { w: 50, d: 50, h: 55 },
+  consoletable: { w: 120, d: 35, h: 80 },
+  chair: { w: 55, d: 55, h: 90 },
+  barstool: { w: 45, d: 45, h: 110 },
+  officechair: { w: 60, d: 60, h: 115 },
+  ottoman: { w: 80, d: 80, h: 45 },
+  bench: { w: 120, d: 40, h: 45 },
+  shelf: { w: 90, d: 35, h: 190 },
+  cabinet: { w: 100, d: 45, h: 120 },
+  dresser: { w: 100, d: 50, h: 90 },
+  tvunit: { w: 160, d: 45, h: 55 },
+  wardrobe: { w: 120, d: 60, h: 210 },
+  vitrinecabinet: { w: 90, d: 45, h: 180 },
+  lamp: { w: 40, d: 40, h: 150 },
+  pendantlamp: { w: 40, d: 40, h: 200 },
+  tablelamp: { w: 35, d: 35, h: 55 },
+  rug: { w: 200, d: 300, h: 2 },
+  mirror: { w: 60, d: 5, h: 150 },
+  nightstand: { w: 50, d: 40, h: 60 },
+  generic: { w: 100, d: 60, h: 90 }
+};
+
+const normalizeProductText = (...values) =>
+  values
+    .flat()
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const clampSceneDimension = (value, min, max) => Math.min(max, Math.max(min, value));
+
+const inferSceneObjectType = (product) => {
+  const text = normalizeProductText(
+    product?.title,
+    product?.handle,
+    product?.sku,
+    product?.id,
+    product?.categoryNames,
+    product?.categorySlugs,
+    product?.categories
+  );
+
+  if (/paevitus|lamamistool|sunlounger/.test(text)) return "sunlounger";
+  if (/nurgadiivan|nurga diivan|l diivan/.test(text)) return "cornersofa";
+  if (/diivanvoodi|diivan voodi|sofabed/.test(text)) return "sofabed";
+  if (/lamamis/.test(text)) return "chaiselongue";
+  if (/diivan|sohva/.test(text)) return "sofa";
+  if (/tugitool|armchair/.test(text)) return "armchair";
+  if (/voodi/.test(text)) return "bed";
+  if (/diivanilaud|kohvilaud|sohvalaud/.test(text)) return "coffeetable";
+  if (/abilaud|korvallaud|sidetable/.test(text)) return "sidetable";
+  if (/konsool|konsoollaud/.test(text)) return "consoletable";
+  if (/(^| )o\d{2,3}( |$)|ø|ummargune/.test(text)) return "roundtable";
+  if (/soogilaud|laud/.test(text)) return "table";
+  if (/baaritool|baartool/.test(text)) return "barstool";
+  if (/kontoritool/.test(text)) return "officechair";
+  if (/tool|chair/.test(text)) return "chair";
+  if (/tumba|puf/.test(text)) return "ottoman";
+  if (/pink|bench/.test(text)) return "bench";
+  if (/vitriin/.test(text)) return "vitrinecabinet";
+  if (/tvkapp|tv kapp|telerialus/.test(text)) return "tvunit";
+  if (/riidekapp|garderoob/.test(text)) return "wardrobe";
+  if (/kummut/.test(text)) return "dresser";
+  if (/riiul/.test(text)) return "shelf";
+  if (/kapp/.test(text)) return "cabinet";
+  if (/laualamp|lauavalgusti/.test(text)) return "tablelamp";
+  if (/rippvalgusti|laevalgusti|luhter|luuster/.test(text)) return "pendantlamp";
+  if (/lamp|valgusti/.test(text)) return "lamp";
+  if (/vaip/.test(text)) return "rug";
+  if (/peegel/.test(text)) return "mirror";
+  if (/ookapp|oo kapp|nightstand/.test(text)) return "nightstand";
+  return "generic";
+};
+
+const inferSceneObjectDims = (product, type) => {
+  const fallback = SCENE_OBJECT_DEFAULT_DIMS[type] ?? SCENE_OBJECT_DEFAULT_DIMS.generic;
+  const text = [product?.title, product?.handle, product?.sku, product?.id].filter(Boolean).join(" ");
+  const match = text.match(/(\d{2,3})\s*[x×]\s*(\d{2,3})(?:\s*[x×]\s*(\d{2,3}))?/i);
+
+  if (!match) return { ...fallback };
+
+  const first = Number(match[1]);
+  const second = Number(match[2]);
+  const third = Number(match[3] ?? Number.NaN);
+  if (!Number.isFinite(first) || !Number.isFinite(second)) return { ...fallback };
+
+  if (Number.isFinite(third)) {
+    return {
+      w: clampSceneDimension(first, 25, 500),
+      d: clampSceneDimension(second, 20, 400),
+      h: clampSceneDimension(third, 10, 320)
+    };
+  }
+
+  return {
+    w: clampSceneDimension(first, 25, 500),
+    d: clampSceneDimension(second, 20, 400),
+    h: fallback.h
+  };
+};
+
+const countImportedCopies = (baseKey) =>
+  state.objects.reduce((total, object) => (
+    object.source === "cart" && String(object.source_key ?? "").startsWith(`${baseKey}:`) ? total + 1 : total
+  ), 0);
+
+const buildLocalSceneObject = (productLike, options = {}) => {
+  const room = state.activeProject?.dimensions;
+  if (!room) return null;
+
+  const baseKey = String(
+    options.baseKey ??
+    productLike?.handle ??
+    productLike?.sku ??
+    productLike?.variantId ??
+    productLike?.id ??
+    productLike?.title ??
+    ""
+  ).trim();
+
+  if (!baseKey) return null;
+
+  const objectType = inferSceneObjectType(productLike);
+  const dims = inferSceneObjectDims(productLike, objectType);
+  const objectIndex = Number(options.index ?? 1);
+  const existingObjects = Array.isArray(options.existingObjects) ? options.existingObjects : state.objects;
+  const pos = findFreePos(dims, room, existingObjects);
+
+  return {
+    id: `cart_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
+    source: "cart",
+    source_key: `${baseKey}:${objectIndex}`,
+    title: String(productLike?.title ?? baseKey),
+    type: objectType,
+    sku: String(productLike?.handle ?? productLike?.sku ?? productLike?.id ?? baseKey),
+    dims_cm: dims,
+    pose: { x_cm: pos.x_cm, z_cm: pos.z_cm, rotation_deg: 0 },
+    attach: { snap: "none" },
+    clearance_cm: 8,
+    locked: false,
+    movable: true,
+    deletable: true,
+    color: "#c89a5b"
+  };
+};
+
+const appendSceneObjects = (objects, successMessage) => {
+  if (!objects.length) return false;
+  pushHistory();
+  const nextObjects = [...state.objects, ...objects];
+  state.objects = nextObjects;
+  if (state.activeProject) {
+    state.activeProject = {
+      ...state.activeProject,
+      scene: {
+        ...(state.activeProject.scene ?? {}),
+        objects: nextObjects
+      }
+    };
+  }
+  state.selectedId = objects[objects.length - 1].id;
+  scene3d.setSelectedId(state.selectedId);
+  state.dirty = true;
+  scheduleAutoSave();
+  renderScene();
+  updateUndoRedo();
+  updateFloatingToolbar();
+  setStatus(successMessage, "ok");
+  return true;
+};
+
 // ── History ────────────────────────────────────────────────────
 const history = createHistoryStore(50);
 
@@ -710,29 +896,22 @@ const detailsPanel = createDetailsPanel({
 // ── Add to scene helpers ───────────────────────────────────────
 async function addProductToScene(product) {
   if (!state.activeProject) { setStatus("Projekt pole valitud", "warn"); return; }
-  const sku = product.sku ?? product.id ?? String(product.title ?? "").slice(0, 20);
-  if (!sku) { setStatus("Tootel puudub SKU", "warn"); return; }
+  const baseKey = String(product.handle ?? product.sku ?? product.variantId ?? product.id ?? product.title ?? "").trim();
+  if (!baseKey) { setStatus("Tootel puudub identifikaator", "warn"); return; }
 
-  setStatus("Lisan ruumi...", "default");
-  try {
-    const existingIds = new Set(state.objects.map((o) => o.id));
-    const data = await fetchJson(`${API_BASE}/room-projects/${state.activeProject.id}/scene/import-products`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ lines: [{ sku, qty: 1 }] })
-    });
-    // Only append genuinely new objects — never let server state overwrite local state
-    const newObjects = (data.project.scene?.objects ?? []).filter((o) => !existingIds.has(o.id));
-    pushHistory();
-    state.objects = [...state.objects, ...newObjects];
-    state.activeProject = data.project;
-    state.dirty = true; scheduleAutoSave();
-    renderScene();
-    updateUndoRedo();
-    setStatus(`Lisatud: ${product.title}`, "ok");
-  } catch (err) {
-    setStatus(err instanceof Error ? err.message : "Lisa ruumi ebaõnnestus", "err");
+  const nextIndex = countImportedCopies(baseKey) + 1;
+  const object = buildLocalSceneObject(product, {
+    baseKey,
+    index: nextIndex,
+    existingObjects: state.objects
+  });
+
+  if (!object) {
+    setStatus("Toote lisamine ebaõnnestus", "err");
+    return;
   }
+
+  appendSceneObjects([object], `Lisatud: ${product.title ?? object.title}`);
 }
 
 async function importCartLines(lines) {
@@ -754,6 +933,34 @@ async function importCartLines(lines) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ cartLines })
     });
+    if (!Number(data.addedCount ?? 0)) {
+      const existingSourceKeys = new Set(state.objects.map((item) => String(item.source_key ?? "")));
+      const localAdds = [];
+
+      for (const line of cartLines) {
+        const baseKey = String(line.id ?? line.title ?? "").trim();
+        if (!baseKey) continue;
+        const targetQty = Math.max(1, Number(line.qty ?? 1));
+        for (let index = 1; index <= targetQty; index += 1) {
+          const sourceKey = `${baseKey}:${index}`;
+          if (existingSourceKeys.has(sourceKey)) continue;
+          const object = buildLocalSceneObject(
+            { ...line, handle: line.id, sku: line.id },
+            { baseKey, index, existingObjects: [...state.objects, ...localAdds] }
+          );
+          if (!object) continue;
+          existingSourceKeys.add(sourceKey);
+          localAdds.push(object);
+        }
+      }
+
+      if (appendSceneObjects(localAdds, `Lisatud ${localAdds.length} eset`)) {
+        onboarding?.notify("cart:add-to-scene");
+      } else {
+        setStatus("Kõik korvi tooted on juba ruumis", "warn");
+      }
+      return;
+    }
     applySceneUpdate(data.project);
     setStatus(`Lisatud ${data.addedCount ?? cartLines.length} eset`, "ok");
     onboarding?.notify("cart:add-to-scene");
